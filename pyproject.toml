@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyber-compliance-mcp"
+version = "0.1.0"
+description = "Cybersecurity compliance MCP server"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Lobby" }]
+dependencies = [
+  "mcp>=1.2.0",
+  "pydantic>=2.7.0"
+]
+
+[project.scripts]
+cyber-compliance-mcp = "cyber_compliance_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cyber_compliance_mcp*"]
