@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 
 from cyber_compliance_mcp import storage
+from cyber_compliance_mcp.storage_backend import JsonFileStorageBackend
 
 
 def test_storage_crud(tmp_path: Path, monkeypatch):
@@ -45,3 +47,14 @@ def test_storage_env_path_backend(tmp_path: Path, monkeypatch):
     out = storage.create_assessment("env-id", "nist_csf")
     assert out["ok"] is True
     assert db.exists()
+
+
+def test_storage_schema_version_and_migration(tmp_path: Path):
+    db = tmp_path / "legacy.json"
+    db.write_text(json.dumps({"assessments": {"a": {"assessment_id": "a", "framework": "nist_csf"}}}), encoding="utf-8")
+
+    backend = JsonFileStorageBackend(db)
+    data = backend.load()
+
+    assert data["schema_version"] == 1
+    assert "statuses" in data["assessments"]["a"]

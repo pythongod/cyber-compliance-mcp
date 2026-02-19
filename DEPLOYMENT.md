@@ -31,3 +31,5 @@ cyber-compliance-mcp
 - When auth is enabled, missing/invalid client token returns `UNAUTHORIZED`.
 - Rate limiting is per-tool and returns `RATE_LIMITED` with retry hints.
 - Request size guards return `REQUEST_TOO_LARGE`.
+- Storage uses advisory lock files (`*.lock`) for safer concurrent writes.
+- Persistence format includes `schema_version` for migration readiness.
