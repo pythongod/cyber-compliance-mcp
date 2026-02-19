@@ -119,3 +119,6 @@ Tool scopes include:
 
 Metrics:
 - `get_metrics()` returns in-memory counters and latency sums.
+
+
+See `RELEASE_CHECKLIST.md` for first-release setup and signed publishing steps.
