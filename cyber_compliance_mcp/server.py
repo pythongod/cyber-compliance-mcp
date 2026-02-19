@@ -1,3 +1,4 @@
+import logging
 from __future__ import annotations
 
 from typing import List
@@ -17,6 +18,11 @@ from .storage import (
     list_assessments as _list_assessments,
     update_control_status as _update_control_status,
 )
+from .crosswalk import get_framework_crosswalk as _get_framework_crosswalk
+from .security import request_context
+
+logger = logging.getLogger("cyber_compliance_mcp")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 mcp = FastMCP("cyber-compliance-mcp")
 
@@ -27,18 +33,30 @@ def get_framework_overview(framework: str) -> dict:
 
     Supported: nist_csf, iso27001, soc2, cis_v8
     """
+    ctx = request_context("get_framework_overview", framework)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=get_framework_overview", ctx.get("request_id"))
     return _get_framework_overview(framework)
 
 
 @mcp.tool()
 def get_control_metadata(framework: str) -> dict:
     """Return owner/priority/evidence metadata for controls in a framework."""
+    ctx = request_context("get_control_metadata", framework)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=get_control_metadata", ctx.get("request_id"))
     return _get_control_metadata(framework)
 
 
 @mcp.tool()
 def generate_checklist(framework: str, org_type: str = "saas") -> dict:
     """Generate a practical compliance checklist for the selected framework."""
+    ctx = request_context("generate_checklist", framework, org_type)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=generate_checklist", ctx.get("request_id"))
     return _generate_checklist(framework, org_type)
 
 
@@ -48,37 +66,71 @@ def calculate_risk_score(controls: List[dict]) -> dict:
 
     Expected each item: {"control": str, "status": "implemented|partial|missing"}
     """
+    ctx = request_context("calculate_risk_score", controls)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=calculate_risk_score", ctx.get("request_id"))
     return _calculate_risk_score(controls)
 
 
 @mcp.tool()
 def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
     """Recommend next actions based on identified control gaps."""
+    ctx = request_context("recommend_next_actions", framework, gaps)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=recommend_next_actions", ctx.get("request_id"))
     return _recommend_next_actions(framework, gaps)
 
 
 @mcp.tool()
 def create_assessment(assessment_id: str, framework: str, org_type: str = "saas") -> dict:
     """Create a persisted assessment record."""
+    ctx = request_context("create_assessment", assessment_id, framework, org_type)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=create_assessment", ctx.get("request_id"))
     return _create_assessment(assessment_id, framework, org_type)
 
 
 @mcp.tool()
 def update_control_status(assessment_id: str, control: str, status: str) -> dict:
     """Update control status in persisted assessment."""
+    ctx = request_context("update_control_status", assessment_id, control, status)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=update_control_status", ctx.get("request_id"))
     return _update_control_status(assessment_id, control, status)
 
 
 @mcp.tool()
 def get_assessment(assessment_id: str) -> dict:
     """Get a persisted assessment by id."""
+    ctx = request_context("get_assessment", assessment_id)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=get_assessment", ctx.get("request_id"))
     return _get_assessment(assessment_id)
 
 
 @mcp.tool()
 def list_assessments() -> dict:
     """List persisted assessments."""
+    ctx = request_context("list_assessments", "")
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=list_assessments", ctx.get("request_id"))
     return _list_assessments()
+
+
+@mcp.tool()
+def get_framework_crosswalk(topic: str) -> dict:
+    """Map common security topics across frameworks."""
+    ctx = request_context("get_framework_crosswalk", topic)
+    if ctx.get("ok") is False:
+        return ctx
+    logger.info("request_id=%s tool=get_framework_crosswalk", ctx.get("request_id"))
+    return _get_framework_crosswalk(topic)
 
 
 def main() -> None:

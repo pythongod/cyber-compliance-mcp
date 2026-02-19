@@ -102,3 +102,21 @@ Failure:
 ```json
 {"ok": false, "error": {"code": "...", "message": "..."}}
 ```
+
+
+## Security and operations controls
+
+Environment flags:
+- `CYBER_MCP_AUTH_REQUIRED=true|false`
+- `CYBER_MCP_API_TOKEN=<server token>`
+- `CYBER_MCP_CLIENT_TOKEN=<client token>`
+- `CYBER_MCP_RATE_LIMIT=60`
+- `CYBER_MCP_RATE_WINDOW_SEC=60`
+- `CYBER_MCP_MAX_CHARS=12000`
+
+Added:
+- request auth guard (token pattern)
+- per-tool rate limiting
+- request size limit
+- structured logs with `request_id`
+- `get_framework_crosswalk(topic)` MCP tool
