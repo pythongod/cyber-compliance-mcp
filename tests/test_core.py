@@ -1,4 +1,4 @@
-from cyber_compliance_mcp.core import generate_checklist, calculate_risk_score, get_framework_overview
+from cyber_compliance_mcp.core import generate_checklist, calculate_risk_score, get_framework_overview, get_control_metadata, validate_inputs
 
 
 def test_framework_overview_supported():
@@ -21,3 +21,21 @@ def test_calculate_risk_score_weighting():
     ])
     assert out["controls_total"] == 3
     assert out["risk_level"] in {"medium", "high"}
+
+def test_generate_checklist_includes_metadata_fields():
+    out = generate_checklist("nist_csf", org_type="saas")
+    row = out["checklist"][0]
+    assert "priority" in row
+    assert "owner" in row
+
+
+def test_get_control_metadata_supported():
+    out = get_control_metadata("soc2")
+    assert out["framework"] == "soc2"
+    assert out["count"] >= 1
+
+
+def test_validate_inputs_bad_framework():
+    out = validate_inputs("bad_framework")
+    assert out["ok"] is False
+    assert out["error"]["code"] == "INVALID_FRAMEWORK"

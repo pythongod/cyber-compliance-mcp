@@ -45,3 +45,22 @@ New MCP tools for persisted assessments:
 - `list_assessments()`
 
 Data is stored in `assessments-db.json` in the working directory.
+
+
+## Control metadata + validation
+
+New capabilities:
+- `get_control_metadata(framework)` for owner/priority/evidence hints
+- Structured validation errors with `code/message/allowed` where applicable
+
+Example error shape:
+
+```json
+{
+  "error": {
+    "code": "INVALID_FRAMEWORK",
+    "message": "Unsupported framework: xyz",
+    "allowed": ["cis_v8", "iso27001", "nist_csf", "soc2"]
+  }
+}
+```

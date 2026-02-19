@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from .metadata import CONTROL_METADATA
+
 FRAMEWORK_CONTROLS: Dict[str, List[str]] = {
     "nist_csf": [
         "GV.OV-01 Governance strategy defined",
@@ -62,16 +64,19 @@ def generate_checklist(framework: str, org_type: str = "saas") -> dict:
             "supported": sorted(FRAMEWORK_CONTROLS.keys()),
         }
 
-    checklist = [
-        {
-            "control": c,
-            "status": "not_started",
-            "owner": "security",
-            "evidence": [],
-            "notes": f"Required for {org_type} environment",
-        }
-        for c in controls
-    ]
+    checklist = []
+    for c in controls:
+        meta = CONTROL_METADATA.get(key, {}).get(c, {})
+        checklist.append(
+            {
+                "control": c,
+                "status": "not_started",
+                "owner": meta.get("owner", "security"),
+                "priority": meta.get("priority", "medium"),
+                "evidence": [meta.get("evidence_example")] if meta.get("evidence_example") else [],
+                "notes": f"Required for {org_type} environment",
+            }
+        )
 
     return {
         "framework": key,
@@ -141,4 +146,47 @@ def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
         "gaps": gaps,
         "recommended_actions": actions,
         "priority": "Start with high-impact missing controls and evidence collection",
+    }
+
+
+def validate_inputs(framework: str, org_type: str | None = None) -> dict:
+    """Validate common inputs and return normalized values/errors."""
+    fw = str(framework or "").strip().lower()
+    if fw not in FRAMEWORK_CONTROLS:
+        return {
+            "ok": False,
+            "error": {
+                "code": "INVALID_FRAMEWORK",
+                "message": f"Unsupported framework: {framework}",
+                "allowed": sorted(FRAMEWORK_CONTROLS.keys()),
+            },
+        }
+
+    if org_type is not None and not str(org_type).strip():
+        return {
+            "ok": False,
+            "error": {
+                "code": "INVALID_ORG_TYPE",
+                "message": "org_type cannot be empty",
+            },
+        }
+
+    return {"ok": True, "framework": fw, "org_type": org_type or "saas"}
+
+
+def get_control_metadata(framework: str) -> dict:
+    key = framework.strip().lower()
+    if key not in FRAMEWORK_CONTROLS:
+        return {
+            "error": {
+                "code": "INVALID_FRAMEWORK",
+                "message": f"Unsupported framework: {framework}",
+                "allowed": sorted(FRAMEWORK_CONTROLS.keys()),
+            }
+        }
+
+    return {
+        "framework": key,
+        "metadata": CONTROL_METADATA.get(key, {}),
+        "count": len(CONTROL_METADATA.get(key, {})),
     }

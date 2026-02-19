@@ -8,6 +8,7 @@ from .core import (
     calculate_risk_score as _calculate_risk_score,
     generate_checklist as _generate_checklist,
     get_framework_overview as _get_framework_overview,
+    get_control_metadata as _get_control_metadata,
     recommend_next_actions as _recommend_next_actions,
 )
 from .storage import (
@@ -27,6 +28,12 @@ def get_framework_overview(framework: str) -> dict:
     Supported: nist_csf, iso27001, soc2, cis_v8
     """
     return _get_framework_overview(framework)
+
+
+@mcp.tool()
+def get_control_metadata(framework: str) -> dict:
+    """Return owner/priority/evidence metadata for controls in a framework."""
+    return _get_control_metadata(framework)
 
 
 @mcp.tool()
