@@ -1,14 +1,53 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict
 
 
 DEFAULT_DB = Path("assessments-db.json")
+ALLOWED_STATUSES = {"implemented", "partial", "missing"}
+ASSESSMENT_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._:-]{1,63}$")
 
 
-def _load_db(path: Path = DEFAULT_DB) -> Dict[str, Any]:
+def _err(code: str, message: str, **extra: Any) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {"error": {"code": code, "message": message}}
+    if extra:
+        payload["error"].update(extra)
+    return payload
+
+
+def _validate_assessment_id(assessment_id: str) -> Dict[str, Any] | None:
+    if not assessment_id or not str(assessment_id).strip():
+        return _err("INVALID_ASSESSMENT_ID", "assessment_id cannot be empty")
+    if not ASSESSMENT_ID_RE.match(str(assessment_id)):
+        return _err(
+            "INVALID_ASSESSMENT_ID",
+            "assessment_id must match ^[a-zA-Z0-9][a-zA-Z0-9._:-]{1,63}$",
+        )
+    return None
+
+
+def _validate_control(control: str) -> Dict[str, Any] | None:
+    if not control or not str(control).strip():
+        return _err("INVALID_CONTROL", "control cannot be empty")
+    return None
+
+
+def _validate_status(status: str) -> Dict[str, Any] | None:
+    normalized = str(status).lower().strip()
+    if normalized not in ALLOWED_STATUSES:
+        return _err(
+            "INVALID_STATUS",
+            f"Unsupported status: {status}",
+            allowed=sorted(ALLOWED_STATUSES),
+        )
+    return None
+
+
+def _load_db(path: Path | None = None) -> Dict[str, Any]:
+    path = path or DEFAULT_DB
     if not path.exists():
         return {"assessments": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -18,15 +57,24 @@ def _load_db(path: Path = DEFAULT_DB) -> Dict[str, Any]:
     return data
 
 
-def _save_db(data: Dict[str, Any], path: Path = DEFAULT_DB) -> None:
+def _save_db(data: Dict[str, Any], path: Path | None = None) -> None:
+    path = path or DEFAULT_DB
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def create_assessment(assessment_id: str, framework: str, org_type: str = "saas") -> Dict[str, Any]:
+    bad_id = _validate_assessment_id(assessment_id)
+    if bad_id:
+        return bad_id
+    if not framework or not str(framework).strip():
+        return _err("INVALID_FRAMEWORK", "framework cannot be empty")
+    if not org_type or not str(org_type).strip():
+        return _err("INVALID_ORG_TYPE", "org_type cannot be empty")
+
     db = _load_db()
     assessments = db.setdefault("assessments", {})
     if assessment_id in assessments:
-        return {"error": "assessment_exists", "assessment_id": assessment_id}
+        return _err("ASSESSMENT_EXISTS", "assessment already exists", assessment_id=assessment_id)
 
     assessments[assessment_id] = {
         "assessment_id": assessment_id,
@@ -39,26 +87,36 @@ def create_assessment(assessment_id: str, framework: str, org_type: str = "saas"
 
 
 def update_control_status(assessment_id: str, control: str, status: str) -> Dict[str, Any]:
-    status = status.lower().strip()
-    if status not in {"implemented", "partial", "missing"}:
-        return {"error": "invalid_status", "allowed": ["implemented", "partial", "missing"]}
+    bad_id = _validate_assessment_id(assessment_id)
+    if bad_id:
+        return bad_id
+    bad_control = _validate_control(control)
+    if bad_control:
+        return bad_control
+    bad_status = _validate_status(status)
+    if bad_status:
+        return bad_status
 
     db = _load_db()
     assessments = db.setdefault("assessments", {})
     entry = assessments.get(assessment_id)
     if not entry:
-        return {"error": "assessment_not_found", "assessment_id": assessment_id}
+        return _err("ASSESSMENT_NOT_FOUND", "assessment not found", assessment_id=assessment_id)
 
-    entry.setdefault("statuses", {})[control] = status
+    entry.setdefault("statuses", {})[control] = str(status).lower().strip()
     _save_db(db)
     return entry
 
 
 def get_assessment(assessment_id: str) -> Dict[str, Any]:
+    bad_id = _validate_assessment_id(assessment_id)
+    if bad_id:
+        return bad_id
+
     db = _load_db()
     entry = db.get("assessments", {}).get(assessment_id)
     if not entry:
-        return {"error": "assessment_not_found", "assessment_id": assessment_id}
+        return _err("ASSESSMENT_NOT_FOUND", "assessment not found", assessment_id=assessment_id)
     return entry
 
 
