@@ -64,3 +64,26 @@ Example error shape:
   }
 }
 ```
+
+
+### Storage tool error contract
+
+All storage CRUD tools now return structured errors:
+
+```json
+{
+  "error": {
+    "code": "INVALID_ASSESSMENT_ID",
+    "message": "assessment_id cannot be empty"
+  }
+}
+```
+
+Common codes:
+- `INVALID_ASSESSMENT_ID`
+- `INVALID_FRAMEWORK`
+- `INVALID_ORG_TYPE`
+- `INVALID_CONTROL`
+- `INVALID_STATUS`
+- `ASSESSMENT_EXISTS`
+- `ASSESSMENT_NOT_FOUND`
