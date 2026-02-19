@@ -1,4 +1,11 @@
-from cyber_compliance_mcp.core import generate_checklist, calculate_risk_score, get_framework_overview, get_control_metadata, validate_inputs
+from cyber_compliance_mcp.core import (
+    calculate_risk_score,
+    generate_checklist,
+    get_control_metadata,
+    get_framework_overview,
+    recommend_next_actions,
+    validate_inputs,
+)
 
 
 def test_framework_overview_supported():
@@ -43,3 +50,11 @@ def test_validate_inputs_bad_framework():
     out = validate_inputs("bad_framework")
     assert out["ok"] is False
     assert out["error"]["code"] == "INVALID_FRAMEWORK"
+
+
+def test_recommend_next_actions_scored_payload():
+    out = recommend_next_actions("nist_csf", ["Identity and access managed", "Audit log management"])
+    assert out["ok"] is True
+    assert len(out["recommended_actions_scored"]) == 2
+    top = out["recommended_actions_scored"][0]
+    assert "severity" in top and "effort" in top and "priority_score" in top

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any, Dict
 
 from .errors import err, ok
+from .storage_backend import JsonFileStorageBackend, get_backend
 
 DEFAULT_DB = Path("assessments-db.json")
 ALLOWED_STATUSES = {"implemented", "partial", "missing"}
@@ -41,19 +41,23 @@ def _validate_status(status: str) -> Dict[str, Any] | None:
 
 
 def _load_db(path: Path | None = None) -> Dict[str, Any]:
-    path = path or DEFAULT_DB
-    if not path.exists():
-        return {"assessments": {}}
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        return {"assessments": {}}
-    data.setdefault("assessments", {})
-    return data
+    if path is not None:
+        return JsonFileStorageBackend(path).load()
+    # Preserve testability via monkeypatching DEFAULT_DB; if env path is set,
+    # JsonFileStorageBackend() will use it.
+    if DEFAULT_DB != Path("assessments-db.json"):
+        return JsonFileStorageBackend(DEFAULT_DB).load()
+    return get_backend().load()
 
 
 def _save_db(data: Dict[str, Any], path: Path | None = None) -> None:
-    path = path or DEFAULT_DB
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    if path is not None:
+        JsonFileStorageBackend(path).save(data)
+        return
+    if DEFAULT_DB != Path("assessments-db.json"):
+        JsonFileStorageBackend(DEFAULT_DB).save(data)
+        return
+    get_backend().save(data)
 
 
 def create_assessment(assessment_id: str, framework: str, org_type: str = "saas") -> Dict[str, Any]:

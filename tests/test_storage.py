@@ -37,3 +37,11 @@ def test_storage_validation_errors(tmp_path: Path, monkeypatch):
 
     bad3 = storage.update_control_status("ok-id", "GV.OV-01", "nope")
     assert bad3["error"]["code"] == "INVALID_STATUS"
+
+
+def test_storage_env_path_backend(tmp_path: Path, monkeypatch):
+    db = tmp_path / "env-db.json"
+    monkeypatch.setenv("CYBER_MCP_DB_PATH", str(db))
+    out = storage.create_assessment("env-id", "nist_csf")
+    assert out["ok"] is True
+    assert db.exists()

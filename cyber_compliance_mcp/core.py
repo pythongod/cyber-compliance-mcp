@@ -152,25 +152,47 @@ def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
     if not isinstance(gaps, list):
         return err("INVALID_GAPS", "gaps must be a list")
 
-    actions = []
+    scored_actions = []
     for gap in gaps:
         g = gap.lower()
         if "asset" in g or "inventory" in g:
-            actions.append("Implement automated asset discovery and CMDB sync")
+            action = "Implement automated asset discovery and CMDB sync"
+            severity, effort = "high", "medium"
         elif "access" in g or "identity" in g:
-            actions.append("Enable SSO + MFA everywhere and review privileged access")
+            action = "Enable SSO + MFA everywhere and review privileged access"
+            severity, effort = "critical", "medium"
         elif "log" in g or "monitor" in g:
-            actions.append("Centralize logs in SIEM with 90+ day retention")
+            action = "Centralize logs in SIEM with 90+ day retention"
+            severity, effort = "high", "high"
         elif "incident" in g:
-            actions.append("Run incident response tabletop exercises quarterly")
+            action = "Run incident response tabletop exercises quarterly"
+            severity, effort = "high", "low"
         else:
-            actions.append(f"Define remediation owner and evidence plan for: {gap}")
+            action = f"Define remediation owner and evidence plan for: {gap}"
+            severity, effort = "medium", "low"
+
+        sev_score = {"medium": 2, "high": 3, "critical": 4}[severity]
+        eff_score = {"low": 1, "medium": 2, "high": 3}[effort]
+        priority_score = (sev_score * 10) - (eff_score * 2)
+
+        scored_actions.append(
+            {
+                "gap": gap,
+                "action": action,
+                "severity": severity,
+                "effort": effort,
+                "priority_score": priority_score,
+            }
+        )
+
+    scored_actions.sort(key=lambda x: x["priority_score"], reverse=True)
 
     return ok(
         {
             "framework": framework,
             "gaps": gaps,
-            "recommended_actions": actions,
+            "recommended_actions": [x["action"] for x in scored_actions],
+            "recommended_actions_scored": scored_actions,
             "priority": "Start with high-impact missing controls and evidence collection",
         }
     )

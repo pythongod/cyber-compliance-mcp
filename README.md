@@ -12,7 +12,9 @@ A cybersecurity compliance MCP server that provides practical compliance tools f
 - Compliance checklist generation
 - Risk scoring by control status
 - Framework mapping helpers
+- Recommendation engine with severity/effort scoring
 - MCP tool interface for agent workflows
+- Pluggable persistence backend (JSON backend included)
 
 ## Quickstart
 
@@ -28,7 +30,11 @@ cyber-compliance-mcp
 - `get_framework_overview(framework)`
 - `generate_checklist(framework, org_type)`
 - `calculate_risk_score(controls)`
-- `recommend_next_actions(framework, gaps)`
+- `recommend_next_actions(framework, gaps)` (returns scored + ordered recommendations)
+
+## Deployment
+
+See `DEPLOYMENT.md` for secure non-local deployment settings (auth, rate limits, request size, DB path).
 
 ## License
 
