@@ -1,13 +1,11 @@
-# TODO (Pruned)
+# TODO (Final Cleanup)
 
-## P0 — Next
+## Manual setup remaining
 
-1. Complete PyPI trusted publishing setup and run first signed release tag.
-2. Expand crosswalk catalog with more topics + explicit control references.
-3. Add optional non-JSON backend implementation (e.g., SQLite/Postgres adapter).
+1. Configure GitHub `pypi` environment protections for tag releases.
+2. Configure PyPI trusted publishing mapping for this repo/workflow.
+3. Run first signed tagged release (`vX.Y.Z`) and verify artifact signatures.
 
-## P1 — Nice-to-have
+## Optional next enhancements
 
-4. Add metrics export format option (Prometheus text endpoint/file output).
-5. Add scope policy profiles (preset policies for dev/staging/prod).
-6. Add storage compaction/cleanup utilities for long-running deployments.
+4. Expand requirements and crosswalk datasets toward full official catalogs.
