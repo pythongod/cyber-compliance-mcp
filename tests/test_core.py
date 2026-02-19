@@ -3,12 +3,14 @@ from cyber_compliance_mcp.core import generate_checklist, calculate_risk_score, 
 
 def test_framework_overview_supported():
     out = get_framework_overview("nist_csf")
+    assert out["ok"] is True
     assert out["framework"] == "nist_csf"
     assert out["control_count"] > 0
 
 
 def test_generate_checklist_default_status():
     out = generate_checklist("iso27001", org_type="saas")
+    assert out["ok"] is True
     assert out["framework"] == "iso27001"
     assert all(x["status"] == "not_started" for x in out["checklist"])
 
@@ -19,6 +21,7 @@ def test_calculate_risk_score_weighting():
         {"control": "b", "status": "partial"},
         {"control": "c", "status": "missing"},
     ])
+    assert out["ok"] is True
     assert out["controls_total"] == 3
     assert out["risk_level"] in {"medium", "high"}
 
@@ -31,6 +34,7 @@ def test_generate_checklist_includes_metadata_fields():
 
 def test_get_control_metadata_supported():
     out = get_control_metadata("soc2")
+    assert out["ok"] is True
     assert out["framework"] == "soc2"
     assert out["count"] >= 1
 

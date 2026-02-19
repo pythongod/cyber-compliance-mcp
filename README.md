@@ -87,3 +87,18 @@ Common codes:
 - `INVALID_STATUS`
 - `ASSESSMENT_EXISTS`
 - `ASSESSMENT_NOT_FOUND`
+
+
+## Unified response contract
+
+All tools now return a consistent envelope:
+
+Success:
+```json
+{"ok": true, "...": "payload"}
+```
+
+Failure:
+```json
+{"ok": false, "error": {"code": "...", "message": "..."}}
+```

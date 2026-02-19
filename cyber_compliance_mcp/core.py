@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 from .metadata import CONTROL_METADATA
+from .errors import err, ok
 
 FRAMEWORK_CONTROLS: Dict[str, List[str]] = {
     "nist_csf": [
@@ -44,25 +45,32 @@ def get_framework_overview(framework: str) -> dict:
     key = framework.strip().lower()
     controls = FRAMEWORK_CONTROLS.get(key)
     if not controls:
-        return {
-            "error": "Unsupported framework",
-            "supported": sorted(FRAMEWORK_CONTROLS.keys()),
+        return err(
+            "INVALID_FRAMEWORK",
+            f"Unsupported framework: {framework}",
+            allowed=sorted(FRAMEWORK_CONTROLS.keys()),
+        )
+    return ok(
+        {
+            "framework": key,
+            "control_count": len(controls),
+            "controls": controls,
         }
-    return {
-        "framework": key,
-        "control_count": len(controls),
-        "controls": controls,
-    }
+    )
 
 
 def generate_checklist(framework: str, org_type: str = "saas") -> dict:
     key = framework.strip().lower()
     controls = FRAMEWORK_CONTROLS.get(key)
     if not controls:
-        return {
-            "error": "Unsupported framework",
-            "supported": sorted(FRAMEWORK_CONTROLS.keys()),
-        }
+        return err(
+            "INVALID_FRAMEWORK",
+            f"Unsupported framework: {framework}",
+            allowed=sorted(FRAMEWORK_CONTROLS.keys()),
+        )
+
+    if not str(org_type).strip():
+        return err("INVALID_ORG_TYPE", "org_type cannot be empty")
 
     checklist = []
     for c in controls:
@@ -78,18 +86,24 @@ def generate_checklist(framework: str, org_type: str = "saas") -> dict:
             }
         )
 
-    return {
-        "framework": key,
-        "org_type": org_type,
-        "checklist": checklist,
-    }
+    return ok(
+        {
+            "framework": key,
+            "org_type": org_type,
+            "checklist": checklist,
+        }
+    )
 
 
 def calculate_risk_score(controls: List[dict]) -> dict:
     weights = {"implemented": 0, "partial": 5, "missing": 10}
 
+    if controls is None:
+        return err("INVALID_CONTROLS", "controls cannot be null")
+    if not isinstance(controls, list):
+        return err("INVALID_CONTROLS", "controls must be a list")
     if not controls:
-        return {"risk_score": 0, "risk_level": "low", "summary": "No controls provided"}
+        return ok({"risk_score": 0, "risk_level": "low", "summary": "No controls provided"})
 
     total = 0
     missing = 0
@@ -115,18 +129,29 @@ def calculate_risk_score(controls: List[dict]) -> dict:
     else:
         level = "critical"
 
-    return {
-        "risk_score": round(pct, 2),
-        "risk_level": level,
-        "controls_total": len(controls),
-        "missing": missing,
-        "partial": partial,
-        "implemented": len(controls) - missing - partial,
-    }
+    return ok(
+        {
+            "risk_score": round(pct, 2),
+            "risk_level": level,
+            "controls_total": len(controls),
+            "missing": missing,
+            "partial": partial,
+            "implemented": len(controls) - missing - partial,
+        }
+    )
 
 
 def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
     framework = framework.lower().strip()
+    if framework not in FRAMEWORK_CONTROLS:
+        return err(
+            "INVALID_FRAMEWORK",
+            f"Unsupported framework: {framework}",
+            allowed=sorted(FRAMEWORK_CONTROLS.keys()),
+        )
+    if not isinstance(gaps, list):
+        return err("INVALID_GAPS", "gaps must be a list")
+
     actions = []
     for gap in gaps:
         g = gap.lower()
@@ -141,52 +166,45 @@ def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
         else:
             actions.append(f"Define remediation owner and evidence plan for: {gap}")
 
-    return {
-        "framework": framework,
-        "gaps": gaps,
-        "recommended_actions": actions,
-        "priority": "Start with high-impact missing controls and evidence collection",
-    }
+    return ok(
+        {
+            "framework": framework,
+            "gaps": gaps,
+            "recommended_actions": actions,
+            "priority": "Start with high-impact missing controls and evidence collection",
+        }
+    )
 
 
 def validate_inputs(framework: str, org_type: str | None = None) -> dict:
     """Validate common inputs and return normalized values/errors."""
     fw = str(framework or "").strip().lower()
     if fw not in FRAMEWORK_CONTROLS:
-        return {
-            "ok": False,
-            "error": {
-                "code": "INVALID_FRAMEWORK",
-                "message": f"Unsupported framework: {framework}",
-                "allowed": sorted(FRAMEWORK_CONTROLS.keys()),
-            },
-        }
+        return err(
+            "INVALID_FRAMEWORK",
+            f"Unsupported framework: {framework}",
+            allowed=sorted(FRAMEWORK_CONTROLS.keys()),
+        )
 
     if org_type is not None and not str(org_type).strip():
-        return {
-            "ok": False,
-            "error": {
-                "code": "INVALID_ORG_TYPE",
-                "message": "org_type cannot be empty",
-            },
-        }
+        return err("INVALID_ORG_TYPE", "org_type cannot be empty")
 
-    return {"ok": True, "framework": fw, "org_type": org_type or "saas"}
+    return ok({"framework": fw, "org_type": org_type or "saas"})
 
 
 def get_control_metadata(framework: str) -> dict:
     key = framework.strip().lower()
     if key not in FRAMEWORK_CONTROLS:
-        return {
-            "error": {
-                "code": "INVALID_FRAMEWORK",
-                "message": f"Unsupported framework: {framework}",
-                "allowed": sorted(FRAMEWORK_CONTROLS.keys()),
-            }
-        }
+        return err(
+            "INVALID_FRAMEWORK",
+            f"Unsupported framework: {framework}",
+            allowed=sorted(FRAMEWORK_CONTROLS.keys()),
+        )
 
-    return {
-        "framework": key,
-        "metadata": CONTROL_METADATA.get(key, {}),
-        "count": len(CONTROL_METADATA.get(key, {})),
-    }
+    return ok(
+        {
+            "framework": key,
+            "metadata": CONTROL_METADATA.get(key, {}),
+            "count": len(CONTROL_METADATA.get(key, {})),
+        }
+    )
