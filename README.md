@@ -31,27 +31,20 @@ cyber-compliance-mcp
 - `generate_checklist(framework, org_type)`
 - `calculate_risk_score(controls)`
 - `recommend_next_actions(framework, gaps)` (returns scored + ordered recommendations)
-
-## Deployment
-
-See `DEPLOYMENT.md` for secure non-local deployment settings (auth, rate limits, request size, DB path).
-
-## License
-
-MIT
-
-
-## Persistence tools
-
-New MCP tools for persisted assessments:
-
 - `create_assessment(assessment_id, framework, org_type="saas")`
 - `update_control_status(assessment_id, control, status)`
 - `get_assessment(assessment_id)`
 - `list_assessments()`
+- `get_framework_crosswalk(topic)`
 
-Data is stored in `assessments-db.json` in the working directory.
+## Persistence tools
 
+Data is stored in `assessments-db.json` in the working directory by default.
+Override with:
+
+```bash
+export CYBER_MCP_DB_PATH=/path/to/assessments-db.json
+```
 
 ## Control metadata + validation
 
@@ -63,6 +56,7 @@ Example error shape:
 
 ```json
 {
+  "ok": false,
   "error": {
     "code": "INVALID_FRAMEWORK",
     "message": "Unsupported framework: xyz",
@@ -71,33 +65,27 @@ Example error shape:
 }
 ```
 
+## Security and operations controls
 
-### Storage tool error contract
+Environment flags:
+- `CYBER_MCP_AUTH_REQUIRED=true|false`
+- `CYBER_MCP_API_TOKEN=<server token>`
+- `CYBER_MCP_CLIENT_TOKEN=<client token>`
+- `CYBER_MCP_RATE_LIMIT=60`
+- `CYBER_MCP_RATE_WINDOW_SEC=60`
+- `CYBER_MCP_MAX_CHARS=12000`
+- `CYBER_MCP_DB_PATH=/var/lib/cyber-mcp/assessments-db.json`
 
-All storage CRUD tools now return structured errors:
-
-```json
-{
-  "error": {
-    "code": "INVALID_ASSESSMENT_ID",
-    "message": "assessment_id cannot be empty"
-  }
-}
-```
-
-Common codes:
-- `INVALID_ASSESSMENT_ID`
-- `INVALID_FRAMEWORK`
-- `INVALID_ORG_TYPE`
-- `INVALID_CONTROL`
-- `INVALID_STATUS`
-- `ASSESSMENT_EXISTS`
-- `ASSESSMENT_NOT_FOUND`
-
+Added:
+- request auth guard (token pattern)
+- per-tool rate limiting
+- request size limit
+- structured logs with `request_id`
+- `get_framework_crosswalk(topic)` MCP tool
 
 ## Unified response contract
 
-All tools now return a consistent envelope:
+All tools return a consistent envelope:
 
 Success:
 ```json
@@ -109,20 +97,10 @@ Failure:
 {"ok": false, "error": {"code": "...", "message": "..."}}
 ```
 
+## Deployment
 
-## Security and operations controls
+See `DEPLOYMENT.md` for secure non-local deployment settings (auth, rate limits, request size, DB path).
 
-Environment flags:
-- `CYBER_MCP_AUTH_REQUIRED=true|false`
-- `CYBER_MCP_API_TOKEN=<server token>`
-- `CYBER_MCP_CLIENT_TOKEN=<client token>`
-- `CYBER_MCP_RATE_LIMIT=60`
-- `CYBER_MCP_RATE_WINDOW_SEC=60`
-- `CYBER_MCP_MAX_CHARS=12000`
+## License
 
-Added:
-- request auth guard (token pattern)
-- per-tool rate limiting
-- request size limit
-- structured logs with `request_id`
-- `get_framework_crosswalk(topic)` MCP tool
+MIT
