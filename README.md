@@ -33,3 +33,15 @@ cyber-compliance-mcp
 ## License
 
 MIT
+
+
+## Persistence tools
+
+New MCP tools for persisted assessments:
+
+- `create_assessment(assessment_id, framework, org_type="saas")`
+- `update_control_status(assessment_id, control, status)`
+- `get_assessment(assessment_id)`
+- `list_assessments()`
+
+Data is stored in `assessments-db.json` in the working directory.

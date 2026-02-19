@@ -10,6 +10,12 @@ from .core import (
     get_framework_overview as _get_framework_overview,
     recommend_next_actions as _recommend_next_actions,
 )
+from .storage import (
+    create_assessment as _create_assessment,
+    get_assessment as _get_assessment,
+    list_assessments as _list_assessments,
+    update_control_status as _update_control_status,
+)
 
 mcp = FastMCP("cyber-compliance-mcp")
 
@@ -42,6 +48,30 @@ def calculate_risk_score(controls: List[dict]) -> dict:
 def recommend_next_actions(framework: str, gaps: List[str]) -> dict:
     """Recommend next actions based on identified control gaps."""
     return _recommend_next_actions(framework, gaps)
+
+
+@mcp.tool()
+def create_assessment(assessment_id: str, framework: str, org_type: str = "saas") -> dict:
+    """Create a persisted assessment record."""
+    return _create_assessment(assessment_id, framework, org_type)
+
+
+@mcp.tool()
+def update_control_status(assessment_id: str, control: str, status: str) -> dict:
+    """Update control status in persisted assessment."""
+    return _update_control_status(assessment_id, control, status)
+
+
+@mcp.tool()
+def get_assessment(assessment_id: str) -> dict:
+    """Get a persisted assessment by id."""
+    return _get_assessment(assessment_id)
+
+
+@mcp.tool()
+def list_assessments() -> dict:
+    """List persisted assessments."""
+    return _list_assessments()
 
 
 def main() -> None:
