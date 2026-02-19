@@ -17,6 +17,7 @@ from .crosswalk import get_framework_crosswalk as _get_framework_crosswalk
 from .security import request_context
 from .policy import enforce_scope
 from .metrics import inc, observe_latency, snapshot
+from .requirements import get_requirements as _get_requirements, list_requirement_frameworks as _list_requirement_frameworks
 from .storage import (
     create_assessment as _create_assessment,
     get_assessment as _get_assessment,
@@ -135,6 +136,16 @@ def get_framework_crosswalk(topic: str) -> dict:
 def get_metrics() -> dict:
     """Return in-memory service metrics snapshot."""
     return {"ok": True, **snapshot()}
+
+
+@mcp.tool()
+def list_requirement_frameworks() -> dict:
+    return _run_tool("list_requirement_frameworks", lambda: _list_requirement_frameworks())
+
+
+@mcp.tool()
+def get_requirements(framework: str, query: str = "") -> dict:
+    return _run_tool("get_requirements", lambda: _get_requirements(framework, query), framework, query)
 
 
 def main() -> None:

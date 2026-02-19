@@ -36,6 +36,8 @@ cyber-compliance-mcp
 - `get_assessment(assessment_id)`
 - `list_assessments()`
 - `get_framework_crosswalk(topic)`
+- `list_requirement_frameworks()`
+- `get_requirements(framework, query="")`
 
 ## Persistence tools
 
