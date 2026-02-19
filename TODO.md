@@ -1,24 +1,20 @@
-# TODO (Prioritized Next 10)
+# TODO (Updated)
 
-## P0 — Immediate
+## P0 — Next
 
-1. Add **framework control metadata** (owner suggestions, evidence examples, priority tags).
-2. Add **assessment persistence layer** (JSON file backend first, DB later).
-3. Add MCP tools for CRUD:
-   - `create_assessment`
-   - `update_control_status`
-   - `get_assessment`
-   - `list_assessments`
-4. Add input validation with clear typed errors for all tool arguments.
+1. Expand recommendations engine with **severity + effort scoring**.
+2. Publish package to **PyPI** with signed release workflow.
+3. Add deployment docs/examples for auth + rate-limit environment settings.
+4. Add persistence backend abstraction (swap JSON file backend with DB adapter).
 
-## P1 — Security + Ops
+## P1 — Reliability
 
-5. Add **auth guard / API token** pattern for non-local deployment.
-6. Add **rate limiting** and request-size limits.
-7. Add structured logging and request correlation IDs.
+5. Add migration/versioning for persisted assessment records.
+6. Add configurable storage path + lock-safe concurrent writes.
+7. Add fuller request audit logs (tool args summary, latency, result status).
+8. Add crosswalk expansion for additional topics and framework references.
 
-## P2 — Ecosystem
+## P2 — Platform
 
-8. Add framework crosswalk endpoint (e.g., NIST ↔ ISO ↔ SOC2 ↔ CIS mapping hints).
-9. Expand recommendations engine with severity + effort scoring.
-10. Publish to **PyPI** with signed release workflow.
+9. Add policy-driven authorization scopes per tool.
+10. Add observability hooks (metrics endpoint / Prometheus-style counters).
