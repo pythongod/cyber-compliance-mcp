@@ -1,4 +1,4 @@
-from cyber_compliance_mcp.metrics import snapshot, inc, observe_latency
+from cyber_compliance_mcp.metrics import as_prometheus, snapshot, inc, observe_latency
 from cyber_compliance_mcp.policy import enforce_scope
 
 
@@ -17,3 +17,16 @@ def test_policy_forbidden(monkeypatch):
     assert out is not None
     assert out["ok"] is False
     assert out["error"]["code"] == "FORBIDDEN"
+
+
+def test_policy_profile_prod(monkeypatch):
+    monkeypatch.setenv("CYBER_MCP_POLICY_ENFORCE", "true")
+    monkeypatch.delenv("CYBER_MCP_ALLOWED_SCOPES", raising=False)
+    monkeypatch.setenv("CYBER_MCP_POLICY_PROFILE", "prod")
+    out = enforce_scope("update_control_status")
+    assert out is not None and out["ok"] is False
+
+
+def test_prometheus_export_has_metrics():
+    text = as_prometheus()
+    assert "cyber_mcp_" in text

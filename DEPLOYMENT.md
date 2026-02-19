@@ -10,7 +10,9 @@ Set these environment variables for non-local deployment:
 - `CYBER_MCP_RATE_LIMIT=60`
 - `CYBER_MCP_RATE_WINDOW_SEC=60`
 - `CYBER_MCP_MAX_CHARS=12000`
-- `CYBER_MCP_DB_PATH=/var/lib/cyber-mcp/assessments-db.json`
+- `CYBER_MCP_BACKEND=json|sqlite`
+- `CYBER_MCP_DB_PATH=/var/lib/cyber-mcp/assessments-db.json` (or `.db` for sqlite)
+- `CYBER_MCP_POLICY_PROFILE=dev|staging|prod`
 
 ## Example
 

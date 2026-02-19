@@ -49,6 +49,14 @@ def test_storage_env_path_backend(tmp_path: Path, monkeypatch):
     assert db.exists()
 
 
+def test_storage_compact(tmp_path: Path, monkeypatch):
+    db = tmp_path / "compact.json"
+    monkeypatch.setenv("CYBER_MCP_DB_PATH", str(db))
+    storage.create_assessment("c1", "nist_csf")
+    out = storage.compact_storage()
+    assert out["ok"] is True
+
+
 def test_storage_schema_version_and_migration(tmp_path: Path):
     db = tmp_path / "legacy.json"
     db.write_text(json.dumps({"assessments": {"a": {"assessment_id": "a", "framework": "nist_csf"}}}), encoding="utf-8")

@@ -41,12 +41,19 @@ cyber-compliance-mcp
 
 ## Persistence tools
 
-Data is stored in `assessments-db.json` in the working directory by default.
-Override with:
+Backends:
+- `json` (default): `assessments-db.json`
+- `sqlite`: `assessments.db`
+
+Select backend and path:
 
 ```bash
-export CYBER_MCP_DB_PATH=/path/to/assessments-db.json
+export CYBER_MCP_BACKEND=sqlite   # or json
+export CYBER_MCP_DB_PATH=/path/to/assessments.db
 ```
+
+Compaction/cleanup:
+- `compact_storage()`
 
 ## Control metadata + validation
 
@@ -121,6 +128,11 @@ Tool scopes include:
 
 Metrics:
 - `get_metrics()` returns in-memory counters and latency sums.
+- `get_metrics_prometheus()` returns Prometheus text output.
+
+Policy profiles:
+- `CYBER_MCP_POLICY_PROFILE=dev|staging|prod`
+- `CYBER_MCP_ALLOWED_SCOPES` (explicit override)
 
 
 See `RELEASE_CHECKLIST.md` for first-release setup and signed publishing steps.

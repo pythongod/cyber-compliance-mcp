@@ -26,3 +26,22 @@ def snapshot() -> dict:
             "counters": dict(_COUNTERS),
             "latency_sum_ms": dict(_LATENCY_SUM_MS),
         }
+
+
+def as_prometheus() -> str:
+    with _LOCK:
+        lines = [
+            "# HELP cyber_mcp_requests_total Total request events.",
+            "# TYPE cyber_mcp_requests_total counter",
+        ]
+        for k, v in sorted(_COUNTERS.items()):
+            safe = k.replace(".", "_")
+            lines.append(f"cyber_mcp_{safe} {v}")
+
+        lines.append("# HELP cyber_mcp_latency_sum_ms Total observed latency per tool in ms.")
+        lines.append("# TYPE cyber_mcp_latency_sum_ms gauge")
+        for k, v in sorted(_LATENCY_SUM_MS.items()):
+            safe = k.replace(".", "_")
+            lines.append(f"cyber_mcp_{safe} {v}")
+
+    return "\n".join(lines) + "\n"

@@ -16,9 +16,10 @@ from .core import (
 from .crosswalk import get_framework_crosswalk as _get_framework_crosswalk
 from .security import request_context
 from .policy import enforce_scope
-from .metrics import inc, observe_latency, snapshot
+from .metrics import as_prometheus, inc, observe_latency, snapshot
 from .requirements import get_requirements as _get_requirements, list_requirement_frameworks as _list_requirement_frameworks
 from .storage import (
+    compact_storage as _compact_storage,
     create_assessment as _create_assessment,
     get_assessment as _get_assessment,
     list_assessments as _list_assessments,
@@ -135,7 +136,19 @@ def get_framework_crosswalk(topic: str) -> dict:
 @mcp.tool()
 def get_metrics() -> dict:
     """Return in-memory service metrics snapshot."""
-    return {"ok": True, **snapshot()}
+    return _run_tool("get_metrics", lambda: {"ok": True, **snapshot()})
+
+
+@mcp.tool()
+def get_metrics_prometheus() -> dict:
+    """Return Prometheus-format metrics text in `text` field."""
+    return _run_tool("get_metrics_prometheus", lambda: {"ok": True, "text": as_prometheus()})
+
+
+@mcp.tool()
+def compact_storage() -> dict:
+    """Compact/cleanup storage backend files."""
+    return _run_tool("compact_storage", lambda: _compact_storage())
 
 
 @mcp.tool()

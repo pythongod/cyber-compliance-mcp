@@ -121,3 +121,8 @@ def get_assessment(assessment_id: str) -> Dict[str, Any]:
 def list_assessments() -> Dict[str, Any]:
     db = _load_db()
     return ok({"assessments": list(db.get("assessments", {}).values())})
+
+
+def compact_storage() -> Dict[str, Any]:
+    backend = get_backend()
+    return backend.compact()

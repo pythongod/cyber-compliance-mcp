@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Protocol
@@ -14,6 +15,8 @@ class StorageBackend(Protocol):
 
     def save(self, data: Dict[str, Any]) -> None: ...
 
+    def compact(self) -> Dict[str, Any]: ...
+
 
 @contextmanager
 def _advisory_lock(lock_path: Path):
@@ -25,7 +28,6 @@ def _advisory_lock(lock_path: Path):
 
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         except Exception:
-            # best-effort fallback when flock is unavailable
             pass
         yield
     finally:
@@ -56,7 +58,6 @@ class JsonFileStorageBackend:
         return data
 
     def _migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        # v0 -> v1: ensure root fields and assessment statuses shape
         data.setdefault("assessments", {})
         for _, entry in list(data["assessments"].items()):
             if not isinstance(entry, dict):
@@ -83,6 +84,59 @@ class JsonFileStorageBackend:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
 
+    def compact(self) -> Dict[str, Any]:
+        data = self.load()
+        self.save(data)
+        return {"ok": True, "backend": "json", "path": str(self.path)}
+
+
+class SQLiteStorageBackend:
+    def __init__(self, path: str | Path | None = None) -> None:
+        env_path = os.getenv("CYBER_MCP_DB_PATH")
+        self.path = Path(path or env_path or "assessments.db")
+
+    def _conn(self) -> sqlite3.Connection:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(self.path))
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)"
+        )
+        return conn
+
+    def _normalize(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(data, dict):
+            data = {}
+        data.setdefault("assessments", {})
+        data.setdefault("schema_version", CURRENT_SCHEMA_VERSION)
+        return data
+
+    def load(self) -> Dict[str, Any]:
+        with self._conn() as conn:
+            row = conn.execute("SELECT v FROM kv WHERE k='db' LIMIT 1").fetchone()
+            if not row:
+                data = {"schema_version": CURRENT_SCHEMA_VERSION, "assessments": {}}
+                conn.execute("INSERT OR REPLACE INTO kv(k,v) VALUES('db',?)", (json.dumps(data),))
+                conn.commit()
+                return data
+            data = json.loads(row[0])
+            data = self._normalize(data)
+            return data
+
+    def save(self, data: Dict[str, Any]) -> None:
+        normalized = self._normalize(data)
+        with self._conn() as conn:
+            conn.execute("INSERT OR REPLACE INTO kv(k,v) VALUES('db',?)", (json.dumps(normalized),))
+            conn.commit()
+
+    def compact(self) -> Dict[str, Any]:
+        with self._conn() as conn:
+            conn.execute("VACUUM")
+        return {"ok": True, "backend": "sqlite", "path": str(self.path)}
+
 
 def get_backend() -> StorageBackend:
+    kind = os.getenv("CYBER_MCP_BACKEND", "json").strip().lower()
+    if kind == "sqlite":
+        return SQLiteStorageBackend()
     return JsonFileStorageBackend()
