@@ -104,3 +104,18 @@ See `DEPLOYMENT.md` for secure non-local deployment settings (auth, rate limits,
 ## License
 
 MIT
+
+
+## Policy scopes + metrics
+
+Optional policy scope enforcement:
+- `CYBER_MCP_POLICY_ENFORCE=true`
+- `CYBER_MCP_ALLOWED_SCOPES=read,write,admin`
+
+Tool scopes include:
+- read: overview/metadata/checklist/score/recommend/crosswalk/get/list
+- write: create/update assessment
+- admin: metrics
+
+Metrics:
+- `get_metrics()` returns in-memory counters and latency sums.

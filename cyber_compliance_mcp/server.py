@@ -15,6 +15,8 @@ from .core import (
 )
 from .crosswalk import get_framework_crosswalk as _get_framework_crosswalk
 from .security import request_context
+from .policy import enforce_scope
+from .metrics import inc, observe_latency, snapshot
 from .storage import (
     create_assessment as _create_assessment,
     get_assessment as _get_assessment,
@@ -29,8 +31,10 @@ mcp = FastMCP("cyber-compliance-mcp")
 
 
 def _run_tool(tool_name: str, fn: Callable[[], dict], *args: Any) -> dict:
+    inc("requests.total")
     ctx = request_context(tool_name, *args)
     if ctx.get("ok") is False:
+        inc("requests.blocked")
         logger.warning(
             "request_id=%s tool=%s status=blocked error_code=%s",
             ctx.get("error", {}).get("request_id", "-"),
@@ -39,13 +43,20 @@ def _run_tool(tool_name: str, fn: Callable[[], dict], *args: Any) -> dict:
         )
         return ctx
 
+    policy = enforce_scope(tool_name)
+    if policy is not None:
+        inc("requests.forbidden")
+        return policy
+
     request_id = ctx.get("request_id")
     t0 = time.perf_counter()
     result = fn()
     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
 
+    observe_latency(tool_name, elapsed_ms)
     status = "ok" if result.get("ok") else "error"
     err_code = result.get("error", {}).get("code", "-") if status == "error" else "-"
+    inc(f"requests.{status}")
     logger.info(
         "request_id=%s tool=%s status=%s latency_ms=%s arg_chars=%s error_code=%s",
         request_id,
@@ -118,6 +129,12 @@ def list_assessments() -> dict:
 @mcp.tool()
 def get_framework_crosswalk(topic: str) -> dict:
     return _run_tool("get_framework_crosswalk", lambda: _get_framework_crosswalk(topic), topic)
+
+
+@mcp.tool()
+def get_metrics() -> dict:
+    """Return in-memory service metrics snapshot."""
+    return {"ok": True, **snapshot()}
 
 
 def main() -> None:
